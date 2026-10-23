@@ -4,29 +4,53 @@ Both functions are yours to write; `uv run synth-train --method oversample` or
 `--method augment` uses them.
 """
 
+import os
 import random
 
 from PIL import Image, ImageEnhance, ImageOps
 
+AUGMENT_LEVEL = os.environ.get("AUGMENT_LEVEL", "moderate").lower()
+
 try:
     from torchvision import transforms
 
-    _TORCHVISION_TRANSFORM = transforms.Compose(
-        [
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomRotation(degrees=15),
-            transforms.RandomAffine(
-                degrees=0,
-                translate=(0.04, 0.04),
-                scale=(0.95, 1.05),
-            ),
-            transforms.ColorJitter(
-                brightness=0.15,
-                contrast=0.15,
-                saturation=0.15,
-            ),
-        ]
-    )
+    if AUGMENT_LEVEL == "strong":
+        _TORCHVISION_TRANSFORM = transforms.Compose(
+            [
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomRotation(degrees=30),
+                transforms.RandomAffine(
+                    degrees=0,
+                    translate=(0.08, 0.08),
+                    scale=(0.88, 1.12),
+                    shear=(-8, 8),
+                ),
+                transforms.ColorJitter(
+                    brightness=0.25,
+                    contrast=0.25,
+                    saturation=0.25,
+                    hue=0.04,
+                ),
+                transforms.RandomPerspective(distortion_scale=0.2, p=0.4),
+            ]
+        )
+    else:  # moderate (default)
+        _TORCHVISION_TRANSFORM = transforms.Compose(
+            [
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomRotation(degrees=15),
+                transforms.RandomAffine(
+                    degrees=0,
+                    translate=(0.04, 0.04),
+                    scale=(0.95, 1.05),
+                ),
+                transforms.ColorJitter(
+                    brightness=0.15,
+                    contrast=0.15,
+                    saturation=0.15,
+                ),
+            ]
+        )
 except ImportError:
     _TORCHVISION_TRANSFORM = None
 
