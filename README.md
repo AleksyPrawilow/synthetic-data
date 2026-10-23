@@ -1,5 +1,7 @@
 # Synthetic Data Generation with Diffusion Models
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AleksyPrawilow/synthetic-data/blob/main/colab.ipynb)
+
 Starter repository for the course
 [Synthetic Data Generation with Diffusion Models](https://patrykbart.github.io/teaching/synthetic-data-generation-with-diffusion-models/).
 Every student answers the same question on the same data:
@@ -43,8 +45,21 @@ Models download into `~/.cache/huggingface` the first time you use them. Add
 `--low-vram` to `synth-generate` on GPUs with less than 6 GB. Training also runs
 on a CPU, only slower; generating images on a CPU is impractically slow.
 
-Without a suitable GPU, use the faculty computers or a free cloud GPU such as
-Google Colab or Kaggle. In a notebook cell there, run:
+### Google Colab (Zero Local Setup)
+
+To avoid downloading heavy machine learning dependencies, large model weights (~3–7 GB), or the ~800 MB dataset onto your local computer, run experiments directly on Google Colab's free cloud GPU.
+
+Click the badge to open the ready-to-run notebook:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AleksyPrawilow/synthetic-data/blob/main/colab.ipynb)
+
+The [`colab.ipynb`](file:///colab.ipynb) notebook includes:
+- **GPU verification & automated setup:** checks T4 GPU, clones repo, and runs `pip install -e .`.
+- **Inline visualization:** display `contact-sheet.jpg` images and metric comparison tables directly in Colab cells.
+- **Structured meeting workflows:** ready-to-run command cells for Meetings 1 through 5.
+- **Persistence & synchronization:** helpers to mount Google Drive, push results back to GitHub, or download a results zip archive before runtime disconnects.
+
+If using standalone Colab cells, run:
 
 ```text
 !git clone <your-repository-url> project
@@ -53,11 +68,7 @@ Google Colab or Kaggle. In a notebook cell there, run:
 !synth-data
 ```
 
-and prefix every later command with `!`, for example
-`!synth-train --name m1-real --method real`. Commit and push your results from
-the notebook, or download them, before the session ends: its disk is erased.
-Download also the `model.pt` files of the runs you will test; they are not
-committed.
+and prefix commands with `!`, for example `!synth-train --name m1-real --method real`. Commit and push results from the notebook, or download them before the session ends: Colab's default disk is ephemeral. Download also the `model.pt` files of the runs you will test; they are not committed.
 
 ## The Fixed Experiment
 
