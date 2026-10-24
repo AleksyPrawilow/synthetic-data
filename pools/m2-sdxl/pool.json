@@ -1,0 +1,22 @@
+{
+  "mode": "t2i",
+  "model": "sdxl-turbo",
+  "repo": "stabilityai/sdxl-turbo",
+  "revision": "71153311d3dbb46851df1931d3ca6e939de83304",
+  "variant": "fp16",
+  "adapter": null,
+  "scheduler": "default",
+  "prompts": [
+    "A clear photo of an egyptian mau cat with clearly visible distinctions of this breed"
+  ],
+  "negative_prompt": "illustration, painting, cartoon, text, watermark, multiple cats, deformed animal, extra limbs",
+  "steps": 4,
+  "guidance": 0.0,
+  "strength": null,
+  "ip_adapter_scale": null,
+  "outpaint_scale": null,
+  "seed": 1000,
+  "size": 512,
+  "sources": [],
+  "skipped_sources": []
+}
