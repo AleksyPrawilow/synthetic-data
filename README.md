@@ -1,3 +1,8 @@
+# Student
+
+Aleksey Pravilov
+Nr. indeksu: 498780
+
 # Synthetic Data Generation with Diffusion Models
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AleksyPrawilow/synthetic-data/blob/main/colab.ipynb)
@@ -54,6 +59,7 @@ Click the badge to open the ready-to-run notebook:
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AleksyPrawilow/synthetic-data/blob/main/colab.ipynb)
 
 The [`colab.ipynb`](file:///colab.ipynb) notebook includes:
+
 - **GPU verification & automated setup:** checks T4 GPU, clones repo, and runs `pip install -e .`.
 - **Inline visualization:** display `contact-sheet.jpg` images and metric comparison tables directly in Colab cells.
 - **Structured meeting workflows:** ready-to-run command cells for Meetings 1 through 5.
@@ -88,11 +94,11 @@ and prefix commands with `!`, for example `!synth-train --name m1-real --method 
 
 ## Commands
 
-| Command | What it does |
-| --- | --- |
-| `uv run synth-train --name NAME --method METHOD` | trains 5 seeds, saves `runs/NAME/` |
-| `uv run synth-generate --name NAME --prompt PROMPT [options]` | makes a pool of images in `pools/NAME/` |
-| `uv run synth-test --run NAME` | evaluates the saved models of a run on the test photos |
+| Command                                                       | What it does                                           |
+| ------------------------------------------------------------- | ------------------------------------------------------ |
+| `uv run synth-train --name NAME --method METHOD`              | trains 5 seeds, saves `runs/NAME/`                     |
+| `uv run synth-generate --name NAME --prompt PROMPT [options]` | makes a pool of images in `pools/NAME/`                |
+| `uv run synth-test --run NAME`                                | evaluates the saved models of a run on the test photos |
 
 `--method` is `real` (no added examples), `oversample`, `augment`, or
 `synthetic` with `--pool NAME`. Each pool has a `manifest.jsonl` line for every
@@ -129,10 +135,15 @@ example):
   "batch_size": 64,
   "budget": 55,
   "split": "val",
-  "tags": {"mode": "img2img", "strength": 0.5},
+  "tags": { "mode": "img2img", "strength": 0.5 },
   "seeds": [
-    {"seed": 0, "egyptian_mau_recall": 0.75, "macro_f1": 0.9, "accuracy": 0.9,
-     "recall": {"Abyssinian": 0.95, "Bengal": 0.85}}
+    {
+      "seed": 0,
+      "egyptian_mau_recall": 0.75,
+      "macro_f1": 0.9,
+      "accuracy": 0.9,
+      "recall": { "Abyssinian": 0.95, "Bengal": 0.85 }
+    }
   ]
 }
 ```
@@ -190,16 +201,16 @@ uv run synth-train --name m2-guidance-3 --method synthetic --pool m2-guidance-3 
     --tag guidance=3
 ```
 
-| Option | Meaning | Default |
-| --- | --- | --- |
-| `--model` | `sd15` (Stable Diffusion 1.5) or `sdxl-turbo` | `sd15` |
-| `--prompt` | text prompt; repeat the option to cycle through several | none: required |
-| `--negative-prompt` | what the image should not contain | drawings, text, extra limbs… |
-| `--steps` | denoising steps of the sampler | 30 (SDXL-Turbo: 4) |
-| `--guidance` | how strongly the image follows the prompt | 7.5 (SDXL-Turbo: 0) |
-| `--scheduler` | sampler: `dpm`, `ddim`, `euler`, or `default` | `dpm` |
-| `--seed` | seed of the first image; image *i* uses seed + *i* | 1000 |
-| `--count` | images in the pool | 110 |
+| Option              | Meaning                                                 | Default                      |
+| ------------------- | ------------------------------------------------------- | ---------------------------- |
+| `--model`           | `sd15` (Stable Diffusion 1.5) or `sdxl-turbo`           | `sd15`                       |
+| `--prompt`          | text prompt; repeat the option to cycle through several | none: required               |
+| `--negative-prompt` | what the image should not contain                       | drawings, text, extra limbs… |
+| `--steps`           | denoising steps of the sampler                          | 30 (SDXL-Turbo: 4)           |
+| `--guidance`        | how strongly the image follows the prompt               | 7.5 (SDXL-Turbo: 0)          |
+| `--scheduler`       | sampler: `dpm`, `ddim`, `euler`, or `default`           | `dpm`                        |
+| `--seed`            | seed of the first image; image _i_ uses seed + _i_      | 1000                         |
+| `--count`           | images in the pool                                      | 110                          |
 
 Choose the pool you take forward on the validation results, write the choice
 down, and test its run with `uv run synth-test --run NAME`.
