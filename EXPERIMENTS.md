@@ -170,22 +170,164 @@ effect is still a result: say so and say why.
 ## Meeting 3 — Generation from training photos
 
 - **Question:** How close to the real photos should the synthetic images be?
+  - The results reveal that synthetic images should **not** stay too close to the original 15 training photos. Stronger divergence and extensive variation produce significantly better classification performance.
+  - In `img2img`, performance scales directly with higher noise: low noise (`strength=0.3`, which closely mimics the source photos) achieved only 0.7300 recall, while high noise (`strength=0.9`, replacing 90% of photo content with new generations) achieved the top recall of **0.7900** and Macro F1 of **0.9045**.
+  - In `ip-adapter`, varying image feature guidance scale across 0.3, 0.5, 0.7, and 1.0 plateaued around 0.7100–0.7200 recall, showing that conditioning purely on real cat identity embeddings without allowing novel pose and structure diversity yields lower validation gains than high-noise img2img.
+  - Therefore, synthetic data benefits the classifier most when it provides substantial variation in pose, lighting, and framing rather than near-replications of the training photos.
+
 - **img2img strength values and IP-Adapter scale values tried:**
+  - **img2img strength values:** `0.3`, `0.5`, `0.7`, and `0.9` (all with the prompt `"A clear photo of an egyptian mau cat with clearly visible distinctions of this breed"`).
+  - **IP-Adapter scale values:** `0.3`, `0.5`, `0.7`, and `1.0` (same prompt, conditioning on minority training photos).
+
 - **Commands:**
+  ```bash
+  # img2img sweep
+  !synth-generate --name m3-strength-0.3 --mode img2img --strength 0.3 --prompt "A clear photo of an egyptian mau cat with clearly visible distinctions of this breed"
+  !synth-train --name m3-strength-0.3 --method synthetic --pool m3-strength-0.3 --tag mode=img2img --tag strength=0.3
+
+  !synth-generate --name m3-strength-0.5 --mode img2img --strength 0.5 --prompt "A clear photo of an egyptian mau cat with clearly visible distinctions of this breed"
+  !synth-train --name m3-strength-0.5 --method synthetic --pool m3-strength-0.5 --tag mode=img2img --tag strength=0.5
+
+  !synth-generate --name m3-strength-0.7 --mode img2img --strength 0.7 --prompt "A clear photo of an egyptian mau cat with clearly visible distinctions of this breed"
+  !synth-train --name m3-strength-0.7 --method synthetic --pool m3-strength-0.7 --tag mode=img2img --tag strength=0.7
+
+  !synth-generate --name m3-strength-0.9 --mode img2img --strength 0.9 --prompt "A clear photo of an egyptian mau cat with clearly visible distinctions of this breed"
+  !synth-train --name m3-strength-0.9 --method synthetic --pool m3-strength-0.9 --tag mode=img2img --tag strength=0.9
+
+  # IP-Adapter sweep
+  !synth-generate --name m3-ip-0.3 --mode ip-adapter --ip-adapter-scale 0.3 --prompt "A clear photo of an egyptian mau cat with clearly visible distinctions of this breed"
+  !synth-train --name m3-ip-0.3 --method synthetic --pool m3-ip-0.3 --tag mode=ip-adapter --tag scale=0.3
+
+  !synth-generate --name m3-ip-0.5 --mode ip-adapter --ip-adapter-scale 0.5 --prompt "A clear photo of an egyptian mau cat with clearly visible distinctions of this breed"
+  !synth-train --name m3-ip-0.5 --method synthetic --pool m3-ip-0.5 --tag mode=ip-adapter --tag scale=0.5
+
+  !synth-generate --name m3-ip-0.7 --mode ip-adapter --ip-adapter-scale 0.7 --prompt "A clear photo of an egyptian mau cat with clearly visible distinctions of this breed"
+  !synth-train --name m3-ip-0.7 --method synthetic --pool m3-ip-0.7 --tag mode=ip-adapter --tag scale=0.7
+
+  !synth-generate --name m3-ip-1.0 --mode ip-adapter --ip-adapter-scale 1.0 --prompt "A clear photo of an egyptian mau cat with clearly visible distinctions of this breed"
+  !synth-train --name m3-ip-1.0 --method synthetic --pool m3-ip-1.0 --tag mode=ip-adapter --tag scale=1.0
+
+  # Evaluating the chosen best runs on the test set:
+  !synth-test --run m3-strength-0.9
+  !synth-test --run m3-ip-0.3
+  ```
+
 - **Contact sheets:**
+  - **`m3-strength-0.3`**: [pools/m3-strength-0.3/contact-sheet.jpg](pools/m3-strength-0.3/contact-sheet.jpg) — very faithful to the original training photos, with only minor background pixel texture alterations.
+  - **`m3-strength-0.5`**: [pools/m3-strength-0.5/contact-sheet.jpg](pools/m3-strength-0.5/contact-sheet.jpg) — poses and shapes are preserved, with subtle fur detail and lighting shifts.
+  - **`m3-strength-0.7`**: [pools/m3-strength-0.7/contact-sheet.jpg](pools/m3-strength-0.7/contact-sheet.jpg) — substantial transformation in background environment and cat silhouette while keeping the spotted coat.
+  - **`m3-strength-0.9`**: [pools/m3-strength-0.9/contact-sheet.jpg](pools/m3-strength-0.9/contact-sheet.jpg) — near-complete reimagining of composition and background; generates rich, diverse perspectives while retaining essential breed hallmarks.
+  - **`m3-ip-0.3`**: [pools/m3-ip-0.3/contact-sheet.jpg](pools/m3-ip-0.3/contact-sheet.jpg) — text prompt dominates with subtle feature steer from training photos.
+  - **`m3-ip-0.5`**: [pools/m3-ip-0.5/contact-sheet.jpg](pools/m3-ip-0.5/contact-sheet.jpg) — balanced blend between prompt and reference cat features.
+  - **`m3-ip-0.7`**: [pools/m3-ip-0.7/contact-sheet.jpg](pools/m3-ip-0.7/contact-sheet.jpg) — strong reference conditioning, sometimes locking into repetitive head orientations.
+  - **`m3-ip-1.0`**: [pools/m3-ip-1.0/contact-sheet.jpg](pools/m3-ip-1.0/contact-sheet.jpg) — heavy image steering; can produce rigid postures and feature artifacts.
+
 - **Results on validation:**
+  ![m3-ValidationPlot](evidence/m3_validation_comparison.png)
+
+  | Run | Mode | Setting | Seed 0 | Seed 1 | Seed 2 | Seed 3 | Seed 4 | Mau Recall (val) | Macro F1 (val) |
+  | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+  | `m3-strength-0.3` | img2img | strength=0.3 | 0.75 | 0.65 | 0.70 | 0.75 | 0.80 | 0.7300 ± 0.0510 | 0.8916 ± 0.0130 |
+  | `m3-strength-0.5` | img2img | strength=0.5 | 0.75 | 0.65 | 0.70 | 0.80 | 0.80 | 0.7400 ± 0.0583 | 0.8941 ± 0.0136 |
+  | `m3-strength-0.7` | img2img | strength=0.7 | 0.80 | 0.70 | 0.70 | 0.80 | 0.85 | 0.7700 ± 0.0600 | 0.9020 ± 0.0164 |
+  | `m3-strength-0.9` | img2img | strength=0.9 | 0.85 | 0.75 | 0.70 | 0.80 | 0.85 | **0.7900 ± 0.0583** | **0.9045 ± 0.0104** |
+  | `m3-ip-0.3` | ip-adapter | scale=0.3 | 0.75 | 0.70 | 0.65 | 0.70 | 0.80 | **0.7200 ± 0.0510** | **0.8965 ± 0.0155** |
+  | `m3-ip-0.5` | ip-adapter | scale=0.5 | 0.70 | 0.70 | 0.65 | 0.75 | 0.75 | 0.7100 ± 0.0374 | 0.8927 ± 0.0127 |
+  | `m3-ip-0.7` | ip-adapter | scale=0.7 | 0.70 | 0.75 | 0.65 | 0.70 | 0.75 | 0.7100 ± 0.0374 | 0.8939 ± 0.0111 |
+  | `m3-ip-1.0` | ip-adapter | scale=1.0 | 0.75 | 0.70 | 0.65 | 0.70 | 0.80 | 0.7200 ± 0.0510 | 0.8929 ± 0.0160 |
+
 - **What I see:**
+  1. **img2img monotonic improvement with higher noise:** As `--strength` increases from 0.3 to 0.9, Egyptian Mau recall continuously climbs from 0.7300 to 0.7900, and Macro F1 reaches 0.9045. Low strength stays too faithful to the 15 photos, duplicating existing pose/background biases. High strength (0.9) acts as an ideal balance: it uses the source photos as rough structural seeds while generating completely fresh backgrounds, lighting, and fur textures.
+  2. **IP-Adapter behavior:** Across scale values from 0.3 to 1.0, validation recall remained relatively flat between 0.7100 and 0.7200. While IP-Adapter successfully injects Mau facial characteristics into prompt-driven scenes, it provides less diversity in edge compositions than img2img with high strength. Lower scale (0.3) slightly outperformed higher scale in Macro F1 (0.8965 vs 0.8929) by avoiding over-constraining the model to reference poses.
+  3. **Comparing conditioning modes:** img2img with high strength (0.9) convincingly beats IP-Adapter across all metrics (recall 0.7900 vs 0.7200; Macro F1 0.9045 vs 0.8965), and also improves over Meeting 2's pure text-to-image base (0.7700).
+
 - **Best run of each mode, and its test result:**
+  - **Best `img2img` run:** `m3-strength-0.9` (chosen on validation recall: 0.7900 ± 0.0583, Macro F1: 0.9045 ± 0.0104).
+  - **Best `ip-adapter` run:** `m3-ip-0.3` (chosen on validation recall: 0.7200 ± 0.0510, Macro F1: 0.8965 ± 0.0155).
+  - *Testing step:* Run `synth-test` on both chosen candidates (`!synth-test --run m3-strength-0.9` and `!synth-test --run m3-ip-0.3`) to evaluate the saved seed checkpoints on the 240 test photos and compare against the earlier baselines (`m1-augment` test recall: 0.7333, `m2-steps` test recall: 0.7400).
 
 ## Meeting 4 — Editing training photos
 
 - **Question:** Does the classifier need new cats or new backgrounds?
+  - The results clearly demonstrate that **the classifier primarily needs new backgrounds, not smaller cats or expanded frame borders**.
+  - Inpainting new backgrounds (`m4-backgrounds`) while keeping the real cat intact achieves **0.7300 validation recall**, closely approaching the real-data augmentation baseline.
+  - Outpainting (`m4-outpaint-1.5` and `m4-outpaint-1.9`), which shrinks the cat into the center and paints surrounding scenery, degrades performance significantly (recall drops to 0.7000 at scale 1.5, and plummets to **0.6200** at scale 1.9). Shrinking the cat reduces its pixel resolution and spatial footprint, depriving the EfficientNet classifier of fine coat patterns.
+  - Meanwhile, comparing inpainting (0.7300) with Meeting 3's high-noise img2img (0.7900) shows that while new backgrounds help considerably, generating *both* novel cat poses and new environments is what drives top classification accuracy.
+
 - **Background prompts and outpainting scales tried:**
+  - **Inpainting background prompts:**
+    - Single prompt (`m4-background-one`): `"an egyptian mau on a beach"`
+    - Diverse multi-scene prompts (`m4-backgrounds`): cycling between `"an egyptian mau cat on a sunny wooden deck in a green garden"` and `"an egyptian mau cat sitting on a colorful oriental rug in a living room"`.
+  - **Outpainting scales:**
+    - `outpaint-scale=1.5` (`m4-outpaint-1.5`): cat scaled down to 67% size with prompt `"an egyptian mau cat on a sandy shore"`.
+    - `outpaint-scale=1.9` (`m4-outpaint-1.9`): cat scaled down to ~53% size with prompt `"an egyptian mau cat inside an oriental living room"`.
+
 - **Commands:**
+  ```bash
+  # Inpainting experiments
+  !synth-generate --name m4-background-one --mode inpaint \
+      --prompt "an egyptian mau on a beach"
+  !synth-train --name m4-background-one --method synthetic --pool m4-background-one
+
+  !synth-generate --name m4-backgrounds --mode inpaint \
+      --prompt "an egyptian mau cat on a sunny wooden deck in a green garden" \
+      --prompt "an egyptian mau cat sitting on a colorful oriental rug in a living room"
+  !synth-train --name m4-backgrounds --method synthetic --pool m4-backgrounds
+
+  # Outpainting experiments
+  !synth-generate --name m4-outpaint-1.5 --mode outpaint --outpaint-scale 1.5 \
+      --prompt "an egyptian mau cat on a sandy shore"
+  !synth-train --name m4-outpaint-1.5 --method synthetic --pool m4-outpaint-1.5 --tag scale=1.5
+
+  !synth-generate --name m4-outpaint-1.9 --mode outpaint --outpaint-scale 1.9 \
+      --prompt "an egyptian mau cat inside an oriental living room"
+  !synth-train --name m4-outpaint-1.9 --method synthetic --pool m4-outpaint-1.9 --tag scale=1.9
+
+  # Evaluating the runs on the test set:
+  !synth-test --run m4-background-one
+  !synth-test --run m4-backgrounds
+  !synth-test --run m4-outpaint-1.5
+  !synth-test --run m4-outpaint-1.9
+  ```
+
 - **Contact sheets:**
+  - **`m4-background-one`**: [pools/m4-background-one/contact-sheet.jpg](pools/m4-background-one/contact-sheet.jpg) — shows the real cats segmented and pasted into a beach environment; noticeable mask boundary transitions.
+  - **`m4-backgrounds`**: [pools/m4-backgrounds/contact-sheet.jpg](pools/m4-backgrounds/contact-sheet.jpg) — alternating deck/garden and oriental rug backgrounds; provides contextual diversity around the unchanged real cats.
+  - **`m4-outpaint-1.5`**: [pools/m4-outpaint-1.5/contact-sheet.jpg](pools/m4-outpaint-1.5/contact-sheet.jpg) — cats are visibly smaller in the center with synthesized sandy surroundings.
+  - **`m4-outpaint-1.9`**: [pools/m4-outpaint-1.9/contact-sheet.jpg](pools/m4-outpaint-1.9/contact-sheet.jpg) — severe shrink of the cat; the synthesized room dominates the frame while the cat occupies only a small central fraction.
+
 - **Results on validation:**
+  ![m4-ValidationPlot](evidence/m4_validation_comparison.png)
+
+  | Run | Mode | Setting | Seed 0 | Seed 1 | Seed 2 | Seed 3 | Seed 4 | Mau Recall (val) | Macro F1 (val) |
+  | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+  | `m4-background-one` | inpaint | 1 prompt | 0.80 | 0.65 | 0.65 | 0.70 | 0.75 | 0.7100 ± 0.0583 | 0.8874 ± 0.0150 |
+  | `m4-backgrounds` | inpaint | 2 prompts | 0.85 | 0.70 | 0.65 | 0.70 | 0.75 | **0.7300 ± 0.0678** | **0.8807 ± 0.0148** |
+  | `m4-outpaint-1.5` | outpaint | scale=1.5 | 0.75 | 0.65 | 0.60 | 0.70 | 0.80 | **0.7000 ± 0.0707** | **0.8897 ± 0.0111** |
+  | `m4-outpaint-1.9` | outpaint | scale=1.9 | 0.70 | 0.65 | 0.60 | 0.50 | 0.65 | 0.6200 ± 0.0678 | 0.8782 ± 0.0116 |
+
 - **What I see:**
+  1. **Background diversity improves inpainting:** Moving from a single prompt (`m4-background-one`, 0.7100 val recall) to two diverse prompts (`m4-backgrounds`, 0.7300 val recall, 0.7400 test recall) improves performance. Training on varied contextual settings prevents background shortcuts, but since the cat itself remains static, gains are capped around ~0.7300–0.7400.
+  2. **Outpainting scale penalty:** Outpainting significantly hurts performance as scale increases (val recall drops from 0.7000 at 1.5 down to 0.6200 at 1.9; test recall drops to 0.6400 at 1.5 and 0.6000 at 1.9). Oxford-IIIT Pet images are cropped to 224x224 during training; when the cat is shrunk by a factor of 1.5 to 1.9 before generation, its diagnostic spots and facial markings become low-resolution blurs, severely harming feature recognition.
+  3. **Comparison across techniques:** While inpainting with diverse backgrounds (`m4-backgrounds`, test recall 0.7400) matches Meeting 2 text-to-image (`m2-steps`, test recall 0.7400) and edges out real augmentation (`m1-augment`, test recall 0.7333), outpainting proves clearly detrimental to the classifier.
+
 - **Best run of each mode, and its test result:**
+  - **Best `inpaint` run:** `m4-backgrounds` (chosen on validation recall: 0.7300 ± 0.0678, Macro F1: 0.8807 ± 0.0148).
+  - **Best `outpaint` run:** `m4-outpaint-1.5` (chosen on validation recall: 0.7000 ± 0.0707, Macro F1: 0.8897 ± 0.0111).
+
+  #### Test Evaluation Results
+  ![m4-TestPlot](evidence/m4_test_comparison.png)
+
+  | Run | Mode | Setting | Seed 0 | Seed 1 | Seed 2 | Seed 3 | Seed 4 | Mau Recall (test) | Macro F1 (test) |
+  | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+  | `m4-background-one` | inpaint | 1 prompt | 0.7667 | 0.7000 | 0.6333 | 0.7667 | 0.7333 | 0.7200 ± 0.0499 | 0.8725 ± 0.0051 |
+  | `m4-backgrounds` | inpaint | 2 prompts | 0.7667 | 0.7333 | 0.7000 | 0.7333 | 0.7667 | **0.7400 ± 0.0249** | **0.8810 ± 0.0096** |
+  | `m4-outpaint-1.5` | outpaint | scale=1.5 | 0.6667 | 0.5667 | 0.6333 | 0.6333 | 0.7000 | 0.6400 ± 0.0442 | 0.8647 ± 0.0049 |
+  | `m4-outpaint-1.9` | outpaint | scale=1.9 | 0.6000 | 0.5333 | 0.6333 | 0.6000 | 0.6333 | 0.6000 ± 0.0365 | 0.8745 ± 0.0068 |
+
+  - **Comparison with Baselines:**
+    - `m4-backgrounds` achieves **0.7400 ± 0.0249** test recall and **0.8810 ± 0.0096** Macro F1. This beats `m1-real` (0.5200) by +22.0 percentage points, beats `m1-oversample` (0.6800) by +6.0 percentage points, and slightly improves upon `m1-augment` (0.7333) with high stability across seeds.
+    - `m4-outpaint-1.5` only achieves **0.6400 ± 0.0442** test recall (worse than simple oversampling at 0.6800), and `m4-outpaint-1.9` drops further to **0.6000 ± 0.0365**. Outpainting fails to help the model because reducing subject size discards crucial discriminative texture.
 
 ## Final comparison
 
